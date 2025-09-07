@@ -426,11 +426,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👨‍💻 Author
 
-**Real-Time Chat Application Team**
-
----
 
 ## 🙏 Acknowledgments
 
@@ -447,7 +443,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter issues or need help:
 - 🐛 **GitHub Issues**: Report bugs and request features
-- 📧 **Email**: support@chatapp.com
+- 📧 **Email**: Contact through Github profile
 - 💬 **Discord**: Join our community server
 
 ---
@@ -876,7 +872,7 @@ mongo --eval "db.runCommand('ping')"
 - 🐛 **Bug Reports**: Use GitHub Issues with detailed descriptions
 - 💡 **Feature Requests**: Submit through GitHub Issues
 - ❓ **Questions**: Use GitHub Discussions
-- 📧 **Direct Contact**: support@chatapp.com
+- 📧 **Direct Contact**: Contact through Github Profile
 
 ### **Community Guidelines**
 - Be respectful and helpful
