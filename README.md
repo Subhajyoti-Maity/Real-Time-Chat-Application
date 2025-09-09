@@ -876,42 +876,6 @@ mongo --eval "db.runCommand('ping')"
 
 ---
 
-## 🎯 Roadmap
-
-### **Short Term (Next 3 months)**
-- [ ] Message reactions system
-- [ ] Typing indicators
-- [ ] File sharing capabilities
-- [ ] Push notifications
-- [ ] Enhanced mobile experience
-
-### **Medium Term (3-6 months)**
-- [ ] Group chat functionality
-- [ ] Message translation
-- [ ] Advanced search features
-- [ ] User blocking system
-- [ ] Message encryption
-
-### **Long Term (6+ months)**
-- [ ] Video calling integration
-- [ ] AI-powered chat features
-- [ ] Advanced analytics
-- [ ] Multi-language support
-- [ ] Enterprise features
-
----
-
-**⭐ Star this repository if you found it helpful!**
-
-**🚀 Ready to build amazing real-time chat experiences with multi-device support!**
-
-**💡 Tip:** Make sure both servers are running for the complete chat experience!
-
-**🆕 New:** You can now log in from multiple devices with the same account!
-
-**📚 Documentation:** Check the additional resources section for more learning materials!
-
-**🤝 Contributing:** We welcome contributions! See our contributing guidelines above.
 
 ## 🗑️ WhatsApp-Style Delete Functionality
 
