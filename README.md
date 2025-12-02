@@ -68,6 +68,30 @@ A **Next.js 15** real-time chat application with **Socket.io** for instant messa
 
 ---
 
+## 📸 Screenshots
+
+![Real-time chat application collage showing login, signup, search, chat, reactions, and session management views](public/screenshots/app-showcase.jpg)
+
+| Login | Signup |
+| --- | --- |
+| ![Login screen](public/screenshots/login-screen.svg) | ![Signup screen](public/screenshots/signup-screen.svg) |
+
+| Reactions | Quick Actions |
+| --- | --- |
+| ![Reaction picker modal](public/screenshots/reaction-picker.svg) | ![Contact quick actions menu](public/screenshots/quick-actions.svg) |
+
+| Dual Chat | Dashboard |
+| --- | --- |
+| ![Two simultaneous chat sessions](public/screenshots/dual-chat.svg) | ![Welcome dashboard with socket status](public/screenshots/dashboard.svg) |
+
+| Search |
+| --- |
+| ![Search within a conversation](public/screenshots/search-chat.svg) |
+
+Each screenshot demonstrates a different part of the experience, from onboarding flows to advanced chat utilities, making it easier to understand the app at a glance.
+
+---
+
 ## 📦 Tech Stack
 
 - **Frontend:** Next.js 15.4.6 (React 19.1.0) with TypeScript
@@ -133,6 +157,21 @@ npm run dev:socket
 ```
 🔌 Socket Server: http://localhost:3006
 
+### 👥 Creating Test Users
+1. Visit `http://localhost:3001/signup` in **two different browsers** (for example, Chrome and Edge) or one normal window plus an incognito window.
+2. Register two unique accounts (e.g., `user1@example.com`, `user2@example.com`).
+3. Log each account in on its own browser tab. Because the socket client now uses the active hostname with the socket port, both clients immediately see each other online and can start chatting.
+
+### 🧹 Removing Demo Accounts or Old Messages
+When you need to reset the database without wiping everything, use the helper script:
+
+```bash
+node scripts/remove-users.js             # removes default demo users (lal/nil) if they exist
+node scripts/remove-users.js alice bob   # remove custom usernames or emails
+```
+
+The script deletes matching users **and** any messages they sent or received. For a full wipe you can still run `node clean-database.js`, but the new script is safer when you only want to remove specific accounts.
+
 ---
 
 ## 📱 Application Structure
@@ -157,52 +196,24 @@ npm run dev:socket
 ## 🔄 How It Works
 
 ### **Authentication Flow**
-1. User signs up/logs in → JWT token generated and stored
 2. Token validated on each API request via middleware
 3. User data fetched and stored in local state
 4. Automatic redirect to main chat interface
 5. **NEW:** Multiple device logins supported with unique session IDs
-6. **ENHANCED:** Improved error messages for login failures (specific "Wrong password" vs "Username not found")
-7. **ENHANCED:** Password visibility toggle and better form validation
-
-### **Real-time Messaging**
-1. User connects to Socket.io server on login
 2. Messages sent via `send-message` event
 3. Server broadcasts to recipient via `receive-message`
-4. Messages stored in MongoDB for persistence
-5. Real-time updates for both sender and receiver
-6. **ENHANCED:** Perfect connection status synchronization between sidebar and chat
-7. **FIXED:** WebSocket error handling with fallback to polling transport for better stability
-8. **ENHANCED:** Robust connection management with automatic reconnection and error recovery
 
 ### **Session Management**
-1. **NEW:** Each login creates unique session ID
-2. **NEW:** Sessions tracked with device information
-3. **NEW:** Multiple active sessions supported simultaneously
-4. **NEW:** Session management UI in Profile section
 5. **NEW:** Ability to terminate specific sessions remotely
 
-### **Message Management**
 - **Send Message** → Instant delivery via Socket.io
-- **Delete for Me** → Remove message from your view only
 - **Delete for Everyone** → Remove message for all participants
 - **Message Reactions** → Add reactions to messages
-- **Message History** → Load previous conversations
-
----
-
-## 🏗️ Architecture
-
-### **Dual Server Setup**
 - **Port 3000+**: Next.js frontend with API routes (auto-port selection)
-- **Port 3006**: Dedicated Socket.io server for real-time communication
 - **MongoDB**: Centralized data storage for users, messages, and sessions
 
 ### **API Endpoints**
 - `POST /api/auth/signup` → User registration
-- `POST /api/auth/login` → User authentication with session creation
-- `GET /api/users/search` → Find users to chat with
-- `GET /api/users/profile` → Get user profile
 - `PUT /api/users/profile` → Update user profile
 - `GET /api/users/online` → Get online users
 - `GET /api/users/favorites` → Get user favorites
@@ -246,7 +257,6 @@ Real-Time-Chat-Application-master/
 │   │   │   └── [id]/          # User deletion endpoint
 │   │   ├── messages/          # Message handling
 │   │   │   ├── [id]/          # Message-specific operations
-│   │   │   │   ├── everyone/  # Delete for everyone
 │   │   │   │   └── me/        # Delete for me
 │   │   │   └── route.ts       # Message CRUD operations
 │   │   ├── socket-status/     # Connection status
@@ -267,7 +277,6 @@ Real-Time-Chat-Application-master/
 │   ├── signup/                # Signup page
 │   ├── globals.css            # Global styles
 │   ├── layout.tsx             # Root layout
-│   └── page.tsx               # Main application page
 ├── lib/                       # Utility libraries
 │   ├── mongodb.ts             # Database connection
 │   ├── mongodb.js             # Database connection (JS)
@@ -284,7 +293,6 @@ Real-Time-Chat-Application-master/
 ├── setup-env.js               # Environment setup script
 ├── next.config.ts             # Next.js configuration
 ├── tsconfig.json              # TypeScript configuration
-├── postcss.config.mjs         # PostCSS configuration
 └── package.json               # Dependencies and scripts
 ```
 
@@ -300,6 +308,8 @@ npm run dev:socket   # Start Socket.io server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
+node scripts/remove-users.js [ids...]  # Remove demo or test users plus their messages
+node clean-database.js [options]       # Wipe or inspect the database (see file for flags)
 ```
 
 ### **Key Development Features**

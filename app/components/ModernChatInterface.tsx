@@ -11,8 +11,8 @@ interface ModernChatInterfaceProps {
   onSendMessage: (text: string) => void;
   onDeleteMessage?: (messageId: string, deleteType: 'for-me' | 'for-everyone') => void;
   onReactionToggle?: (messageId: string, reaction: string, userId: string) => void;
-  onForwardMessage?: (messageId: string, text: string, recipientId: string) => void;
-  availableUsers?: Array<{ id: string; username: string; email: string }>;
+  onCloseChat?: () => void;
+  onClearChat?: () => Promise<unknown> | unknown;
 }
 
 export default function ModernChatInterface({ 
@@ -22,8 +22,8 @@ export default function ModernChatInterface({
   onSendMessage, 
   onDeleteMessage,
   onReactionToggle,
-  onForwardMessage,
-  availableUsers = [],
+  onCloseChat,
+  onClearChat,
 }: ModernChatInterfaceProps) {
   const [newMessage, setNewMessage] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -31,13 +31,15 @@ export default function ModernChatInterface({
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotification, setShowNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const [showForwardModal, setShowForwardModal] = useState<string | null>(null);
-  const [selectedRecipient, setSelectedRecipient] = useState<string>('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const [isClearingChat, setIsClearingChat] = useState(false);
   
   // Debug logging removed for cleaner console
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
 
   // Function to show notifications
   const showNotificationMessage = (type: 'success' | 'error', message: string) => {
@@ -177,18 +179,6 @@ export default function ModernChatInterface({
     }
   };
 
-  const handleForwardMessage = () => {
-    if (selectedRecipient && showForwardModal && onForwardMessage) {
-      const messageToForward = messages.find(m => m.id === showForwardModal);
-      if (messageToForward) {
-        onForwardMessage(showForwardModal, messageToForward.text, selectedRecipient);
-        setShowForwardModal(null);
-        setSelectedRecipient('');
-        showNotificationMessage('success', 'Message forwarded successfully!');
-      }
-    }
-  };
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -218,6 +208,50 @@ export default function ModernChatInterface({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showEmojiPicker]);
+
+  useEffect(() => {
+    if (!showSettingsMenu) {
+      setShowContactInfo(false);
+      return;
+    }
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (settingsMenuRef.current && target && !settingsMenuRef.current.contains(target)) {
+        setShowSettingsMenu(false);
+        setShowContactInfo(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettingsMenu]);
+
+  const handleCloseChatFromSettings = () => {
+    if (onCloseChat) {
+      onCloseChat();
+      setShowSettingsMenu(false);
+      setShowContactInfo(false);
+    }
+  };
+
+  const handleClearChatFromSettings = async () => {
+    if (!onClearChat) {
+      return;
+    }
+
+    try {
+      setIsClearingChat(true);
+      await onClearChat();
+      showNotificationMessage('success', 'Chat cleared for you.');
+      setShowSettingsMenu(false);
+      setShowContactInfo(false);
+    } catch (error) {
+      console.error('❌ Error clearing chat:', error);
+      showNotificationMessage('error', 'Failed to clear chat. Please try again.');
+    } finally {
+      setIsClearingChat(false);
+    }
+  };
 
   const formatTime = (timestamp: Date | string) => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
@@ -321,45 +355,116 @@ export default function ModernChatInterface({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">{selectedUser.username}</h2>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600">Online</span>
-                <span className="text-xs text-gray-400">•</span>
-                <span className="text-xs text-gray-400">{filteredMessages.length} messages</span>
-                <span className="text-xs text-gray-400">•</span>
-                <span className="text-xs text-gray-400">User: {user.id}</span>
-                <span className="text-xs text-gray-400">•</span>
-                <span className="text-xs text-gray-400">Selected: {selectedUser.id}</span>
-                <span className="text-xs text-gray-400">•</span>
-                <span className="text-xs text-gray-400">Own messages: {filteredMessages.filter(m => m.senderId === user.id).length}</span>
-                <span className="text-xs text-gray-400">•</span>
-                <span className="text-xs text-gray-400">Received: {filteredMessages.filter(m => m.senderId !== user.id).length}</span>
+              <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
+                <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span>Online</span>
+                </span>
+                <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                  <span>Sent</span>
+                  <span className="text-blue-900 font-semibold">
+                    {filteredMessages.filter(m => m.senderId === user.id).length}
+                  </span>
+                </span>
+                <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-pink-50 text-pink-700 border border-pink-100">
+                  <span>Received</span>
+                  <span className="text-pink-900 font-semibold">
+                    {filteredMessages.filter(m => m.senderId !== user.id).length}
+                  </span>
+                </span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            {/* Voice Call Button */}
-            <button className="p-3 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-xl transition-all duration-200 hover:shadow-sm" title="Voice call">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </button>
-            
-            {/* Video Call Button */}
-            <button className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all duration-200 hover:shadow-sm" title="Video call">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </button>
-            
+          <div className="relative flex items-center space-x-2" ref={settingsMenuRef}>
             {/* Settings Button */}
-            <button className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all duration-200 hover:shadow-sm" title="Settings">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <button
+              onClick={() => setShowSettingsMenu(prev => !prev)}
+              className="p-3 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 text-blue-500 hover:text-purple-600 rounded-xl transition-all duration-200 hover:shadow-lg border border-transparent hover:border-purple-100"
+              title="Chat settings"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                <defs>
+                  <linearGradient id="settings-gear-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="50%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+                <path
+                  stroke="url(#settings-gear-gradient)"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  stroke="url(#settings-gear-gradient)"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </button>
+
+            {showSettingsMenu && (
+              <div className="absolute right-0 top-12 w-60 bg-white border border-gray-200 rounded-2xl shadow-2xl z-20">
+                <div className="px-4 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                  Quick actions
+                </div>
+                <button
+                  onClick={() => setShowContactInfo(prev => !prev)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="flex items-center space-x-3">
+                    <span>📇</span>
+                    <span>View contact</span>
+                  </span>
+                  <span className="text-xs text-gray-400">{showContactInfo ? 'Hide' : 'Show'}</span>
+                </button>
+                {showContactInfo && selectedUser && (
+                  <div className="px-4 py-3 text-sm text-gray-700 border-t border-gray-100 bg-gray-50">
+                    <p className="font-semibold text-gray-900">{selectedUser.username}</p>
+                    {selectedUser.email && (
+                      <p className="text-xs text-gray-500 mt-1">{selectedUser.email}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Status: {selectedUser.isOnline ? 'Online' : 'Offline'}
+                    </p>
+                  </div>
+                )}
+                {onClearChat && (
+                  <button
+                    onClick={handleClearChatFromSettings}
+                    disabled={isClearingChat}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm text-gray-700 border-t border-gray-100 transition-colors ${
+                      isClearingChat ? 'bg-gray-50 cursor-not-allowed opacity-60' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="flex items-center space-x-3">
+                      <span>🧹</span>
+                      <span>Clear chat</span>
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {isClearingChat ? 'Clearing…' : 'Keep inbox tidy'}
+                    </span>
+                  </button>
+                )}
+                {onCloseChat && (
+                  <button
+                    onClick={handleCloseChatFromSettings}
+                    className="w-full flex items-center space-x-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                  >
+                    <span>🚪</span>
+                    <span>Close chat</span>
+                  </button>
+                )}
+                <div className="px-4 py-2 text-[11px] text-gray-400 bg-gray-50 rounded-b-2xl">
+                  More settings coming soon
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -367,20 +472,21 @@ export default function ModernChatInterface({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-6">
         {/* Message Search Bar */}
-        <div className="sticky top-0 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 z-10">
-          <div className="relative">
+        <div className="sticky top-0 z-10 mb-3">
+          <div className="bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 shadow-sm w-full max-w-md mx-auto">
+            <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="🔍 Search messages..."
-              className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+              className="w-full px-3 py-2 pl-9 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
             />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               🔍
             </div>
             {searchQuery.trim() && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
                 <button
                   onClick={() => setSearchQuery('')}
                   className="text-gray-400 hover:text-gray-600 p-1"
@@ -391,11 +497,12 @@ export default function ModernChatInterface({
               </div>
             )}
           </div>
-          {searchQuery.trim() && (
-            <div className="mt-2 text-xs text-gray-500">
-              Found {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''} matching "{searchQuery}"
-            </div>
-          )}
+            {searchQuery.trim() && (
+              <div className="mt-1 text-xs text-gray-500">
+                Found {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''} matching "{searchQuery}"
+              </div>
+            )}
+          </div>
         </div>
         
         {Object.entries(messageGroups).map(([date, dateMessages]) => (
@@ -499,98 +606,19 @@ export default function ModernChatInterface({
                               {formatTime(message.timestamp)}
                             </span>
                           </span>
-                          
-                          {/* Enhanced Status Indicators */}
-                          {isOwnMessage && (
-                            <div className="flex items-center space-x-2">
-                              {/* Message Status */}
-                              <div className="flex items-center space-x-1">
-                                {message.tempId ? (
-                                  <div className="flex items-center space-x-1 text-blue-400">
-                                    <svg className="w-3 h-3 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <span className="text-xs">Sending</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center space-x-1 text-green-500">
-                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span className="text-xs">Delivered</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Message Actions - Only show for non-deleted messages */}
-                          <div className="flex items-center space-x-2">
-                            {/* Reply Button */}
-                            <button
-                              onClick={() => {
-                                setReplyToMessage(message);
-                                console.log('💬 Reply to message:', message.id);
-                              }}
-                              className="text-xs text-blue-500 hover:text-blue-700 transition-all duration-200 p-2 rounded-lg border border-blue-200 hover:bg-blue-50 hover:shadow-sm"
-                              title="Reply to this message"
-                            >
-                              💬
-                            </button>
-                            
-                            {/* Forward Button */}
-                            <button
-                              onClick={() => {
-                                console.log('📤 Forward message:', message.id);
-                                if (onForwardMessage) {
-                                  // Show forward modal
-                                  setShowForwardModal(message.id);
-                                } else {
-                                  showNotificationMessage('error', 'Forward function not available!');
-                                }
-                              }}
-                              className="text-xs text-green-500 hover:text-green-700 transition-all duration-200 p-2 rounded-lg border border-green-200 hover:bg-green-50 hover:shadow-sm"
-                              title="Forward this message"
-                            >
-                              📤
-                            </button>
-                            
-                            {/* Copy Button */}
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(message.text);
-                                console.log('📋 Copied message to clipboard:', message.text);
-                                // Show temporary success feedback
-                                const button = event?.target as HTMLButtonElement;
-                                if (button) {
-                                  const originalText = button.innerHTML;
-                                  button.innerHTML = '✅';
-                                  button.className = 'text-xs text-green-600 p-2 rounded-lg border border-green-300 bg-green-50';
-                                  setTimeout(() => {
-                                    button.innerHTML = originalText;
-                                    button.className = 'text-xs text-purple-500 hover:text-purple-700 transition-all duration-200 p-2 rounded-lg border border-purple-200 hover:bg-purple-50 hover:shadow-sm';
-                                  }, 1000);
-                                }
-                              }}
-                              className="text-xs text-purple-500 hover:text-purple-700 transition-all duration-200 p-2 rounded-lg border border-purple-200 hover:bg-purple-50 hover:shadow-sm"
-                              title="Copy message text"
-                            >
-                              📋
-                            </button>
-                            
-                            {/* Reactions Button */}
-                            {message.id && message.id !== 'undefined' && message.id !== 'null' && (
-                              <div className="inline-block">
-                                <ReactionBar
-                                  messageId={message.id}
-                                  userId={user.id}
-                                  currentReactions={message.reactions || {}}
-                                  onReactionToggle={handleReactionToggle}
-                                />
-                              </div>
-                            )}
-                          </div>
                         </div>
+
+                        {/* Lightweight Reaction Bar */}
+                        {message.id && message.id !== 'undefined' && message.id !== 'null' && (
+                          <div className="mt-3">
+                            <ReactionBar
+                              messageId={message.id}
+                              userId={user.id}
+                              currentReactions={message.reactions || {}}
+                              onReactionToggle={handleReactionToggle}
+                            />
+                          </div>
+                        )}
                         
                         {/* Delete Button - Always show for non-temporary messages */}
                         {(message.senderId === user.id || message.receiverId === user.id) && !message.tempId && (
@@ -693,15 +721,7 @@ export default function ModernChatInterface({
         )}
         
         {/* Keyboard Shortcuts Info */}
-        <div className="mt-4 text-center">
-          <div className="inline-flex items-center space-x-4 text-xs text-gray-400 bg-gray-50 px-4 py-2 rounded-full">
-            <span>💡 Keyboard shortcuts:</span>
-            <span className="bg-white px-2 py-1 rounded border">Ctrl+Enter</span>
-            <span className="text-gray-500">Send message</span>
-            <span className="bg-white px-2 py-1 rounded border">Esc</span>
-            <span className="text-gray-500">Close dialogs</span>
-          </div>
-        </div>
+        <div className="mt-4" />
         
         <div ref={messagesEndRef} />
       </div>
@@ -737,11 +757,6 @@ export default function ModernChatInterface({
           </div>
         )}
 
-        {/* Attachment Button */}
-        <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors duration-200">
-          📎
-        </button>
-
         {/* Message Input */}
         <input
           type="text"
@@ -772,62 +787,7 @@ export default function ModernChatInterface({
         </button>
       </div>
 
-      {/* Forward Modal */}
-      {showForwardModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Forward Message</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Recipient
-              </label>
-              <select
-                value={selectedRecipient}
-                onChange={(e) => setSelectedRecipient(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Choose a user...</option>
-                {availableUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.username} ({user.email})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4 p-3 bg-gray-50 rounded-md">
-              <p className="text-sm text-gray-600 mb-1">Message to forward:</p>
-              <p className="text-sm font-medium">
-                {messages.find(m => m.id === showForwardModal)?.text || ''}
-              </p>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowForwardModal(null);
-                  setSelectedRecipient('');
-                }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleForwardMessage}
-                disabled={!selectedRecipient}
-                className={`px-4 py-2 rounded-md transition-colors ${
-                  selectedRecipient
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                Forward
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Forward modal removed for cleaner UI */}
       
       {/* Message Context Menu */}
       {/* This block is removed as context menu is no longer used */}

@@ -6,7 +6,7 @@
     "setup": "node setup-env.js",
     "dev": "next dev -p 3001",
     "dev:socket": "cross-env SOCKET_PORT=3006 node server.js",
-    "start:all": "npm run dev & npm run dev:socket",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:socket\"",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint"
@@ -31,7 +31,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
     "cross-env": "^10.0.0",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.0.6",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "^5"

@@ -713,13 +713,42 @@ const startServer = async () => {
     initializeSocketIO();
     
     // Create HTTP server for Socket.IO only
-    const server = createServer((req, res) => {
-      // Socket.IO server only - return simple response
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('Socket.IO Server Running');
+    const server = createServer();
+
+    // Provide lightweight health/status responses without touching Socket.IO traffic
+    server.on('request', (req, res) => {
+      if (req.method !== 'GET') {
+        return; // Let Socket.IO handle non-GET traffic
+      }
+
+      const { pathname } = parse(req.url, true);
+
+      if (pathname === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('Socket.IO Server Running');
+        return;
+      }
+
+      if (pathname === '/health' || pathname === '/api/socket-status') {
+        const payload = {
+          status: 'ok',
+          timestamp: new Date().toISOString(),
+          socketPath: '/api/socket',
+          connections: io?.engine?.clientsCount || 0,
+          rooms: io?.of('/')?.adapter?.rooms?.size || 0,
+          uptime: process.uptime(),
+        };
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        });
+        res.end(JSON.stringify(payload));
+        return;
+      }
     });
 
-    // Attach Socket.IO to the server
+    // Attach Socket.IO to the server (handles /api/socket requests internally)
     io.attach(server);
 
     // Start listening

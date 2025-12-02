@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { User, Message } from '../../types';
 import ReactionBar from './ReactionBar';
 
+const EMOJI_OPTIONS = ['😊', '😂', '❤️', '👍', '😢', '😡', '🎉', '👏', '🔥', '💎', '⭐', '🚀', '🎯', '💯', '✨', '🌟', '💪', '🎊', '🎈', '🎁', '🍕', '☕', '🌺', '🌈'];
+
 interface ChatInterfaceProps {
   user: User;
   selectedUser: User;
@@ -21,7 +23,10 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const [newMessage, setNewMessage] = useState('');
   const [currentReactions, setCurrentReactions] = useState<Record<string, Record<string, string>>>({});
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,6 +35,23 @@ export default function ChatInterface({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node) &&
+        !emojiButtonRef.current?.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojiPicker]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,12 +200,6 @@ export default function ChatInterface({
                           {formatTime(message.timestamp)}
                         </span>
                         
-                        {/* Message Status for own messages */}
-                        {isOwnMessage && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-white/80">✓✓</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                     
@@ -221,13 +237,39 @@ export default function ChatInterface({
             
             {/* Input Actions */}
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-2">
-              <button type="button" className="p-1 text-gray-400 hover:text-purple-500 transition-colors duration-200">
+              <button
+                type="button"
+                ref={emojiButtonRef}
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                className="p-1 text-gray-400 hover:text-purple-500 transition-colors duration-200"
+              >
                 😊
               </button>
-              <button type="button" className="p-1 text-gray-400 hover:text-purple-500 transition-colors duration-200">
-                📎
-              </button>
             </div>
+
+            {showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className="absolute right-0 bottom-14 z-20 w-56 rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl"
+              >
+                <div className="mb-2 text-xs font-semibold text-gray-500">Pick an emoji</div>
+                <div className="grid grid-cols-6 gap-2">
+                  {EMOJI_OPTIONS.map((emoji) => (
+                    <button
+                      key={`composer-emoji-${emoji}`}
+                      type="button"
+                      onClick={() => {
+                        setNewMessage((prev) => prev + emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      className="rounded-xl p-2 text-lg transition-colors duration-200 hover:bg-gray-100"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           <button

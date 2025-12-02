@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Sidebar from './components/Sidebar';
 import Connections from './components/Connections';
@@ -8,8 +8,10 @@ import Profile from './components/Profile';
 import Favorites from './components/Favorites';
 import ModernChatInterface from './components/ModernChatInterface';
 import { User, Message, ProfileUpdateData } from '../types';
+import { getSocketServerUrl } from '../lib/config';
 
 export default function Home() {
+  const socketServerUrl = useMemo(() => getSocketServerUrl(), []);
   const [user, setUser] = useState<User | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -177,8 +179,10 @@ export default function Home() {
       socketRef.current = null;
     }
     
+        console.log('🌐 Using socket server URL:', socketServerUrl);
+
           // Create socket connection with enhanced configuration - FIXED for WebSocket errors
-      const socket = io('http://localhost:3006', {
+      const socket = io(socketServerUrl, {
         path: '/api/socket',
         transports: ['polling'], // Start with polling only to avoid WebSocket errors
         upgrade: false, // Disable automatic upgrade to prevent WebSocket errors
@@ -290,44 +294,51 @@ export default function Home() {
         // Debounce the update to prevent rapid successive calls
         statusUpdateTimeoutRef.current = setTimeout(() => {
           if (userStatuses && Array.isArray(userStatuses)) {
-                    safeSetAllUsers(prev => {
-          // Handle case where prev is undefined (first call)
-          if (!prev || !Array.isArray(prev)) {
-            console.log('🔄 First time setting allUsers, initializing with:', userStatuses);
-            return userStatuses;
-          }
-          
-          // Create a map of new statuses for quick lookup
-          const statusMap = new Map(userStatuses.map(u => [u.id, u]));
-          
-          // Check if there are actual changes before updating
-          const hasChanges = prev.some(user => {
-            const newStatus = statusMap.get(user.id);
-            if (!newStatus) return false;
-            
-            return user.isOnline !== newStatus.isOnline ||
-                   user.lastActivity !== newStatus.lastActivity;
-          });
-          
-          // Only update if there are actual changes
-          if (!hasChanges) {
-            console.log('🔄 No status changes detected, skipping update');
-            return prev;
-          }
-          
-          console.log('🔄 Status changes detected, updating allUsers');
-          return prev.map(user => {
-            const newStatus = statusMap.get(user.id);
-            if (newStatus) {
-              return {
-                ...user,
-                isOnline: newStatus.isOnline,
-                lastActivity: newStatus.lastActivity
-              };
-            }
-            return user;
-          });
-        });
+            const normalizedStatuses = userStatuses.map(status => ({
+              ...status,
+              status: status.isOnline ? 'online' : 'offline',
+              lastActivity: typeof status.lastActivity === 'string'
+                ? status.lastActivity
+                : new Date(status.lastActivity || Date.now()).toISOString()
+            }));
+
+            safeSetAllUsers(prev => {
+              const previous = Array.isArray(prev) ? prev : [];
+              const prevMap = new Map(previous.map(user => [user.id, user]));
+              let hasChanges = previous.length !== normalizedStatuses.length;
+
+              const mergedUsers = normalizedStatuses.map(status => {
+                const existing = prevMap.get(status.id);
+                if (!existing) {
+                  hasChanges = true;
+                  return status;
+                }
+
+                const updatedUser = {
+                  ...existing,
+                  ...status,
+                };
+
+                if (
+                  existing.isOnline !== status.isOnline ||
+                  existing.lastActivity !== status.lastActivity ||
+                  existing.username !== status.username ||
+                  existing.email !== status.email
+                ) {
+                  hasChanges = true;
+                }
+
+                return updatedUser;
+              });
+
+              if (!hasChanges) {
+                console.log('🔄 No status changes detected, skipping update');
+                return previous;
+              }
+
+              console.log('🔄 Status changes detected, updating allUsers with merged list');
+              return mergedUsers;
+            });
             
             // Update online user count
             const onlineCount = userStatuses.filter(u => u.isOnline).length;
@@ -355,38 +366,50 @@ export default function Home() {
         
         // Debounce the update to prevent rapid successive calls
         userStatusTimeoutRef.current = setTimeout(() => {
-                  safeSetAllUsers(prev => {
-          // Handle case where prev is undefined (first call)
-          if (!prev || !Array.isArray(prev)) {
-            console.log('🔄 First time setting allUsers in user-status-changed, skipping update');
-            return prev || [];
+          let userFound = false;
+          safeSetAllUsers(prev => {
+            if (!prev || !Array.isArray(prev)) {
+              console.log('🔄 First time setting allUsers in user-status-changed, skipping update');
+              return prev || [];
+            }
+
+            const userToUpdate = prev.find(user => user.id === data.userId);
+            if (!userToUpdate) {
+              return prev;
+            }
+
+            userFound = true;
+            const normalizedActivity = typeof data.lastActivity === 'string'
+              ? data.lastActivity
+              : new Date(data.lastActivity || new Date()).toISOString();
+
+            const hasChanges =
+              userToUpdate.status !== data.status ||
+              userToUpdate.isOnline !== (data.status === 'online') ||
+              userToUpdate.lastActivity !== normalizedActivity;
+
+            if (!hasChanges) {
+              console.log('🔄 No status changes detected for user, skipping update');
+              return prev;
+            }
+
+            console.log('🔄 Status changes detected for user, updating');
+            return prev.map(user =>
+              user.id === data.userId
+                ? {
+                    ...user,
+                    status: data.status,
+                    isOnline: data.status === 'online',
+                    lastActivity: normalizedActivity,
+                  }
+                : user
+            );
+          });
+
+          if (!userFound && socketRef.current) {
+            console.log('🆕 Unknown user status received, requesting full status refresh');
+            socketRef.current.emit('get-online-status');
           }
-          
-          // Check if there are actual changes before updating
-          const userToUpdate = prev.find(user => user.id === data.userId);
-          if (!userToUpdate) return prev;
-          
-          const hasChanges = userToUpdate.status !== data.status ||
-                           userToUpdate.isOnline !== (data.status === 'online') ||
-                           userToUpdate.lastActivity !== (typeof data.lastActivity === 'string' ? data.lastActivity : new Date().toISOString());
-          
-          if (!hasChanges) {
-            console.log('🔄 No status changes detected for user, skipping update');
-            return prev;
-          }
-          
-          console.log('🔄 Status changes detected for user, updating');
-          return prev.map(user => 
-            user.id === data.userId 
-              ? { 
-                  ...user, 
-                  status: data.status, 
-                  isOnline: data.status === 'online',
-                  lastActivity: typeof data.lastActivity === 'string' ? data.lastActivity : new Date().toISOString()
-                }
-              : user
-          );
-        });
         }, 300); // 300ms debounce delay
       } catch (error) {
         console.error('❌ Error handling user status change:', error);
@@ -791,7 +814,7 @@ export default function Home() {
       
       isInitializedRef.current = false;
     };
-  }, [user?.id]);
+  }, [user?.id, socketServerUrl]);
 
       // Add window focus/blur and visibility change listeners for better online status tracking
     useEffect(() => {
@@ -1208,6 +1231,35 @@ export default function Home() {
     }
   };
 
+  const handleClearChat = async () => {
+    if (!user?.id || !selectedUser?.id) {
+      throw new Error('Chat participants not available');
+    }
+
+    try {
+      const response = await fetch('/api/messages/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          targetUserId: selectedUser.id
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to clear chat');
+      }
+
+      safeSetMessages([]);
+      return data;
+    } catch (error) {
+      console.error('❌ Error clearing chat:', error);
+      throw error;
+    }
+  };
+
   const handleReactionToggle = async (messageId: string, reaction: string, userId: string) => {
     if (!user || !socketRef.current) return;
     
@@ -1258,30 +1310,20 @@ export default function Home() {
     }
   };
 
-  const handleForwardMessage = (messageId: string, text: string, recipientId: string) => {
-    try {
-      console.log('📤 page.tsx: handleForwardMessage called with:', { messageId, text, recipientId });
-      
-      if (!user || !socketRef.current) {
-        console.error('❌ User not logged in or socket not connected');
-        return;
-      }
-      
-      // Send forwarded message via socket
-      socketRef.current.emit('send-message', {
-        senderId: user.id,
-        receiverId: recipientId,
-        text: `↪️ Forwarded: ${text}`,
-        tempId: `forward-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      });
-      
-      console.log('📤 Message forwarded successfully:', { messageId, text, recipientId });
-    } catch (error) {
-      console.error('❌ Error forwarding message:', error);
-      setError('Failed to forward message. Please try again.');
-      setTimeout(() => setError(''), 5000);
+  const handleCloseChat = useCallback(() => {
+    if (!selectedUser) {
+      return;
     }
-  };
+
+    if (socketRef.current && user) {
+      const conversationRoom = `chat_${user.id}_${selectedUser.id}`;
+      socketRef.current.emit?.('leave-conversation', { room: conversationRoom, userId: user.id });
+    }
+
+    setSelectedUser(null);
+    safeSetMessages([]);
+    setActiveTab('chat');
+  }, [selectedUser, safeSetMessages, user]);
 
 
 
@@ -1673,8 +1715,8 @@ export default function Home() {
           onSendMessage={sendMessage}
           onDeleteMessage={handleDeleteMessage}
           onReactionToggle={handleReactionToggle}
-          onForwardMessage={handleForwardMessage}
-          availableUsers={allUsers || []}
+          onCloseChat={handleCloseChat}
+          onClearChat={handleClearChat}
         />
       );
     }
@@ -1706,7 +1748,11 @@ export default function Home() {
             <h1 className="text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent mb-4 font-sans drop-shadow-sm">
               Welcome to Chat App
             </h1>
-            <p className="text-xl text-gray-600 mb-8 font-sans max-w-2xl mx-auto">
+            <p className="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-4 flex items-center justify-center space-x-2">
+              <span aria-hidden="true">👥</span>
+              <span>Multiple logins supported – open this app in another tab or device to test real-time syncing.</span>
+            </p>
+            <p className="text-xl text-indigo-600 font-semibold mb-8 font-sans max-w-2xl mx-auto text-center">
               Connect with friends and family in real-time with our beautiful, modern chat experience
             </p>
           </div>
@@ -1756,7 +1802,7 @@ export default function Home() {
             {/* Connection Details */}
             <div className="mt-4 text-xs text-gray-500 text-center">
               <p>Socket.IO Status: {connectionStatus}</p>
-              <p>Server: localhost:3006</p>
+              <p>Server: {socketServerUrl}</p>
             </div>
           </div>
 
@@ -1944,14 +1990,6 @@ export default function Home() {
       {/* Action Buttons - Fixed Top Right */}
       <div className="fixed top-4 right-4 z-50 flex space-x-3">
         {/* Logout and test buttons removed from top-right corner */}
-      </div>
-
-      {/* Enhanced Multiple Login Info */}
-      <div className="fixed top-20 right-4 z-40 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm border border-white/20 hover:shadow-xl transition-all duration-300">
-        <div className="flex items-center space-x-2">
-          <span>💡</span>
-          <span>Multiple logins supported</span>
-        </div>
       </div>
 
       {/* Enhanced Error Display */}
