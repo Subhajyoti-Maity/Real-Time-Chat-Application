@@ -104,20 +104,19 @@ Create two demo accounts via `/signup`, log in on different browsers, and chat i
 
 ---
 
-## 🖼 Demo Clips of the Application
-Add **JPG** screenshots to `public/screenshots/` and extend this table whenever you capture fresh UI states.
+## 🖼 Demo Clips & Descriptions
+Drop fresh **JPEG**s into `public/screenshots/` and extend this gallery. Each entry shows a different UX slice so readers can understand the experience at a glance.
 
-| Demo clip | Description |
-| --- | --- |
-| ![Sign-in screen](./public/screenshots/sign-in.jpg) | Clean login experience with username/email support and gradient CTA. |
-| ![Create account screen](./public/screenshots/sign-up.jpg) | Signup form with password confirmation and friendly helper text. |
-| [![Send reaction](./public/screenshots/reactions.jpg)](./public/screenshots/reactions.jpg) | Inline send-reaction flow showing the emoji picker and live delivery. |
-| ![Dual chat](./public/screenshots/dual-chat.jpg) | Side-by-side sender/receiver browsers proving real-time sync in both directions. |
-| [![Quick actions](./public/screenshots/settings.jpg)](./public/screenshots/settings.jpg) | Contact action sheet with view contact, clear chat, and close chat controls. |
-| ![Message search](./public/screenshots/message-search.jpg) | Searching messages inline while composing so context stays in view. |
-| ![Home dashboard](./public/screenshots/dashboard.jpg) | Post-login landing view with sockets online, user list, and welcome metrics. |
+| Scene | Preview | Highlights |
+| --- | --- | --- |
+| Sign-in flow | <img src="./public/screenshots/sign-in.jpeg" alt="Sign in screen" width="260" /> | Polished login with username/email support, gradient CTA, and session hints. |
+| Create account | <img src="./public/screenshots/create-account.jpeg" alt="Create account" width="260" /> | Guided onboarding with password confirmation, helper copy, and error surfacing. |
+| Dual chat mirror | <img src="./public/screenshots/dual-chat.jpeg" alt="Dual chat" width="260" /> | Sender/receiver browsers shown side-by-side to highlight live bi-directional sync. |
+| Send reaction | <img src="./public/screenshots/send-reaction.jpeg" alt="Send reaction" width="260" /> | Emoji picker + inline reaction chips prove instant feedback without leaving the thread. |
+| Search messages | <img src="./public/screenshots/search-messages.jpeg" alt="Search messages" width="260" /> | Keyword search keeps context in view so users can find history mid-conversation. |
+| Home dashboard | <img src="./public/screenshots/home-dashboard.jpeg" alt="Home dashboard" width="260" /> | Landing screen with active sockets, favorites, and quick stats right after login. |
 
-Each clip should spotlight a distinct UX moment. Missing images simply mean the `.jpg` isn’t present in `public/screenshots/`.
+> Missing thumbnails just mean the referenced `.jpeg` has not been added yet—keep names consistent to avoid broken previews.
 
 ---
 
