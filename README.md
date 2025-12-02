@@ -20,6 +20,18 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
 
 ---
 
+## 🧰 Tech Stack
+| Layer | Technologies |
+| --- | --- |
+| UI framework | Next.js 15 App Router, React 19, TypeScript 5 |
+| Styling | Tailwind CSS v4, custom CSS modules, PostCSS |
+| Real-time transport | Socket.io 4 (client + Node server) |
+| Data & auth | MongoDB Atlas with Mongoose 8, JWT, bcryptjs |
+| Tooling | Node.js 20+, npm 10+, ESLint 9, Turbopack/Next build |
+| Dev scripts | `dev`, `dev:socket`, `dev:all`, setup wizard, cleanup utilities |
+
+---
+
 ## 🏗 Architecture Overview
 - **App Router UI**: `app/` renders pages + API routes.
 - **Socket hub**: `server.js` handles WebSocket traffic off the Next.js process.
