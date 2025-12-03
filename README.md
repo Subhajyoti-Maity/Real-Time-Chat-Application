@@ -104,19 +104,20 @@ Create two demo accounts via `/signup`, log in on different browsers, and chat i
 
 ---
 
-## 🖼 Demo Clips & Descriptions
-Drop fresh **JPEG**s into `public/screenshots/` and extend this gallery. Each entry shows a different UX slice so readers can understand the experience at a glance.
+## 🖼 Demo Clips (Quick Tour)
+Add more **JPEG**s under `public/screenshots/` and drop new rows in this compact gallery.
 
-| Scene | Preview | Highlights |
+| View | Preview | Focus |
 | --- | --- | --- |
-| Sign-in flow | <img src="./public/screenshots/sign-in.jpeg" alt="Sign in screen" width="260" /> | Polished login with username/email support, gradient CTA, and session hints. |
-| Create account | <img src="./public/screenshots/create-account.jpeg" alt="Create account" width="260" /> | Guided onboarding with password confirmation, helper copy, and error surfacing. |
-| Dual chat mirror | <img src="./public/screenshots/dual-chat.jpeg" alt="Dual chat" width="260" /> | Sender/receiver browsers shown side-by-side to highlight live bi-directional sync. |
-| Send reaction | <img src="./public/screenshots/send-reaction.jpeg" alt="Send reaction" width="260" /> | Emoji picker + inline reaction chips prove instant feedback without leaving the thread. |
-| Search messages | <img src="./public/screenshots/search-messages.jpeg" alt="Search messages" width="260" /> | Keyword search keeps context in view so users can find history mid-conversation. |
-| Home dashboard | <img src="./public/screenshots/home-dashboard.jpeg" alt="Home dashboard" width="260" /> | Landing screen with active sockets, favorites, and quick stats right after login. |
+| Sign-in | <img src="./public/screenshots/sign-in.jpeg" alt="Sign in" width="220" /> | Username/email login with gradient CTA + session reminder. |
+| Create account | <img src="./public/screenshots/create-account.jpeg" alt="Create account" width="220" /> | Onboarding with helper copy and password confirmation. |
+| Dual chat | <img src="./public/screenshots/dual-chat.jpeg" alt="Dual chat" width="220" /> | Sender/receiver panes proving live sync in both directions. |
+| Quick actions | <img src="./public/screenshots/quick-actions.jpg" alt="Quick actions" width="220" /> | Contact action sheet for view profile, clear chat, archive, etc. |
+| Reactions | <img src="./public/screenshots/send-reaction.jpeg" alt="Reactions" width="220" /> | Emoji picker + inline chips for immediate feedback. |
+| Search | <img src="./public/screenshots/search-messages.jpeg" alt="Search" width="220" /> | Keyword search while composing so context never leaves. |
+| Dashboard | <img src="./public/screenshots/home-dashboard.jpeg" alt="Dashboard" width="220" /> | Post-login overview with presence, favorites, and socket status. |
 
-> Missing thumbnails just mean the referenced `.jpeg` has not been added yet—keep names consistent to avoid broken previews.
+> If an image fails to render, double-check the filename/extension inside `public/screenshots/`.
 
 ---
 
@@ -173,3 +174,4 @@ Drop fresh **JPEG**s into `public/screenshots/` and extend this gallery. Each en
 
 ## 📄 License
 This project is released under the MIT License. See `LICENSE` (add one if it does not yet exist).
+in
