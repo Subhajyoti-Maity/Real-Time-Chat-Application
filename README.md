@@ -172,6 +172,3 @@ Add more **JPEG**s under `public/screenshots/` and drop new rows in this compact
 - Subhajyoti Maity -
 ---
 
-## 📄 License
-This project is released under the MIT License. See `LICENSE` (add one if it does not yet exist).
-in
