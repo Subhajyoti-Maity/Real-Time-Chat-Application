@@ -70,9 +70,6 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
 ## 🏗 Architecture Overview
 
 
- ```
-        
-```
 ┌───────────────┐
 │   Browser     │
 │  (User/App)   │
