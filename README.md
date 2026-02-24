@@ -64,26 +64,26 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
 │   Browser     │
 │  (User/App)   │
 └──────┬────────┘
-        │  HTTP/API/WebSocket
-        ▼
+       │  HTTP/API/WebSocket
+       ▼
 ┌────────────────────┐
 │  Next.js Server    │
 │ (API & Socket.io)  │
 └──────┬─────────────┘
-        │  DB Queries
-        ▼
+       │  DB Queries
+       ▼
 ┌───────────────┐
 │   MongoDB     │
 │  (Database)   │
 └───────────────┘
-        ▲
-        │
-        │  WebSocket (Real-time Messaging)
-        └───────────────┐
-                          │
-┌──────────────────────┘
-│
-└──────────────────────┘
+       ▲
+       │
+       │  WebSocket (Real-time Messaging)
+       └───────────────┐
+                       │
+┌──────────────────────┴─────────────────────┐
+│              (Back to Browser)             │
+└────────────────────────────────────────────┘
 ```
 
 ---
