@@ -59,8 +59,6 @@ export default function Login() {
       console.log('🔍 Login response:', { status: response.status, ok: response.ok, data });
 
       if (!response.ok) {
-        console.error('❌ Login failed:', data.error);
-        
         // Handle specific error messages
         let errorMessage = 'Login failed';
         if (data.error) {
@@ -78,8 +76,10 @@ export default function Login() {
               errorMessage = data.error;
           }
         }
-        
-        throw new Error(errorMessage);
+        setError(errorMessage);
+        setIsLoading(false);
+        return;
+      }
       }
 
       console.log('✅ Login successful, storing data...');

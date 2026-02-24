@@ -61,19 +61,65 @@ export default function Connections({ onUserSelect, selectedUserId, currentUserI
     }
   }, [socket, currentUserId]);
 
-  // Use users prop directly instead of maintaining separate localUsers state
-  const otherUsers = users.filter(user => user.id !== currentUserId);
-  
+<<<<<<< HEAD
+  // Show only online users except the current user
+  const onlineUsers = users.filter(user => user.id !== currentUserId && user.isOnline === true);
+
   // Filter users based on search query (excluding current user)
-  const filteredUsers = otherUsers.filter(user => 
-    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = onlineUsers.filter(user =>
+    (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Ensure no duplicates in the final display
-  const uniqueUsers = filteredUsers.filter((user, index, self) => 
+  const uniqueUsers = filteredUsers.filter((user, index, self) =>
     index === self.findIndex(u => u.id === user.id)
   );
+  // Socket connection error state
+  const [socketError, setSocketError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleConnect = () => setSocketError(null);
+    const handleDisconnect = () => setSocketError('Disconnected from chat server. Please check your connection and make sure the backend server is running.');
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+    };
+  }, [socket]);
+=======
+
+
+  // Show only online users except the current user
+  const onlineUsers = users.filter(user => user.id !== currentUserId && user.isOnline === true);
+
+  // Filter users based on search query (excluding current user)
+  const filteredUsers = onlineUsers.filter(user =>
+    (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Ensure no duplicates in the final display
+  const uniqueUsers = filteredUsers.filter((user, index, self) =>
+    index === self.findIndex(u => u.id === user.id)
+  );
+  // Socket connection error state
+  const [socketError, setSocketError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleConnect = () => setSocketError(null);
+    const handleDisconnect = () => setSocketError('Disconnected from chat server. Please check your connection and make sure the backend server is running.');
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+    };
+  }, [socket]);
+>>>>>>> 7c665d6 (Update README diagrams and documentation, add application overview, clean up diagrams)
 
   // Debug logging for rendering
   useEffect(() => {
@@ -242,6 +288,20 @@ export default function Connections({ onUserSelect, selectedUserId, currentUserI
         </div>
       </div>
 
+      {/* Socket Error */}
+      {socketError && (
+        <div className="p-4 text-center bg-red-100 text-red-700 font-semibold border border-red-300 rounded mb-2">
+          {socketError}
+        </div>
+      )}
+=======
+      {/* Socket Error */}
+      {socketError && (
+        <div className="p-4 text-center bg-red-100 text-red-700 font-semibold border border-red-300 rounded mb-2">
+          {socketError}
+        </div>
+      )}
+>>>>>>> 7c665d6 (Update README diagrams and documentation, add application overview, clean up diagrams)
       {/* Users List */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
         {isLoading ? (
@@ -289,7 +349,7 @@ export default function Connections({ onUserSelect, selectedUserId, currentUserI
                     {/* Avatar with Status */}
                     <div className="flex-shrink-0 relative group/avatar">
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover/avatar:shadow-xl transition-all duration-300 transform group-hover/avatar:scale-110">
-                        {user.username.charAt(0).toUpperCase()}
+                        {(user.username && user.username.length > 0) ? user.username.charAt(0).toUpperCase() : "?"}
                       </div>
                       
                       {/* Animated Ring */}
