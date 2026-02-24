@@ -19,41 +19,14 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
 └──────────────┘
 ```
 
-## 🗂️ Model Workflow Diagram
-
-```
-+-------------------+        +-------------------+        +-------------------+
-|       USER        |        |     MESSAGE       |        |     FAVORITE      |
-+-------------------+        +-------------------+        +-------------------+
-| id: string        |◄───────| senderId: string  |        | id: string        |
-| username: string  |        | receiverId:string |        | userId: string    |
-| email: string     |        | text: string      |        | favoriteUserId:...|
-| password: string  |        | timestamp: date   |        +-------------------+
-| favorites: [id]   |        | deletedForEveryone|        
-| isOnline: boolean |        | deletedFor: [id]  |        
-| lastActivity:date |        +-------------------+        
-+-------------------+                ▲                    
-         ▲                            │                    
-         │                            │                    
-         │                            │                    
-+-------------------+        +-------------------+         
-|     SESSION       |        |     REACTION      |         
-+-------------------+        +-------------------+         
-| id: string        |        | id: string        |         
-| userId: string    |        | messageId: string |         
-| deviceInfo: string|        | userId: string    |         
-| lastActivity:date |        | emoji: string     |         
-| createdAt: date   |        +-------------------+         
-+-------------------+                                      
-```
 
 ## 🔄 Project Working Overview
 
 ```
-┌───────────────┐         HTTP/API/WebSocket         ┌────────────────────┐         DB Queries         ┌───────────────┐
-│   Browser     │ ─────────────────────────────────▶ │   Next.js Server   │ ────────────────────────▶ │   MongoDB     │
-│ (User/App)    │ ◀──────────────────────────────── │  (API & Socket.io) │ ◀─────────────────────── │ (Database)    │
-└───────────────┘        UI/UX, Auth, Chat          └────────────────────┘    Models, Sessions      └───────────────┘
+┌───────────────┐        HTTP/API/WebSocket        ┌────────────────────┐        DB Queries        ┌───────────────┐
+│   Browser     │ ───────────────────────────────▶ │   Next.js Server   │ ───────────────────────▶ │   MongoDB     │
+│ (User/App)    │ ◀──────────────────────────────  │  (API & Socket.io) │ ◀──────────────────────  │ (Database)    │
+└───────────────┘      UI/UX, Auth, Chat           └────────────────────┘   Models, Sessions      └───────────────┘
         │                        ▲
         │      WebSocket         │
         └────────────────────────┘
@@ -90,15 +63,23 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
 
 ---
 
+
 ## 🏗 Architecture Overview
-- **App Router UI**: `app/` renders pages + API routes.
-- **Socket hub**: `server.js` handles WebSocket traffic off the Next.js process.
-- **MongoDB via Mongoose**: central models live in `lib/` + `models/` and are reused by APIs, sockets, and scripts.
-- **Middleware**: JWT verification guards protected routes.
+
+- **App Router UI**: `app/` renders pages + API routes (Next.js frontend & backend).
+- **Socket hub**: `server.js` handles WebSocket traffic (real-time messaging, presence, reactions).
+- **MongoDB via Mongoose**: Central models in `lib/` + `models/` shared by APIs, sockets, and scripts.
+- **Middleware**: JWT verification guards protected routes and APIs.
 
 ```
-Browser ↔ Next.js (app/) ↔ API Routes ↔ MongoDB
-        ↘ Socket.io Client ↔ server.js ↔ MongoDB
+┌───────────────┐      HTTP/API/WebSocket      ┌────────────────────┐      DB Queries      ┌───────────────┐
+│   Browser     │ ───────────────────────────▶ │   Next.js Server   │ ───────────────────▶ │   MongoDB     │
+│ (User/App)    │ ◀──────────────────────────  │  (API & Socket.io) │ ◀──────────────────  │ (Database)    │
+└───────────────┘      UI/UX, Auth, Chat       └────────────────────┘   Models, Sessions   └───────────────┘
+        │                      ▲
+        │    WebSocket         │
+        └──────────────────────┘
+         Real-time Messaging (Socket.io)
 ```
 
 ---
