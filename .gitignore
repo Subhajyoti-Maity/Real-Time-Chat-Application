@@ -1,3 +1,25 @@
+# Build output
+dist/
+
+# Logs
+*.log
+*.tgz
+
+# Swap files
+*.swp
+*.swo
+
+# VSCode
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# OS files
+Thumbs.db
+
+# Ignore screenshots (optional, remove if you want to keep them private)
+# (Uncomment to ignore screenshots. Currently, screenshots are tracked for demo clips.)
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
