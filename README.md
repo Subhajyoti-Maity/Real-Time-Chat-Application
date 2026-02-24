@@ -62,13 +62,11 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
        - Backend (Socket.IO): http://localhost:3006
 - For production, deploy frontend and backend as separate services or use a reverse proxy.
 
----
 
 ---
 
 
 ## 🏗 Architecture Overview
-
 
 ┌───────────────┐
 │   Browser     │
