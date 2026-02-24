@@ -253,8 +253,6 @@ Add more **JPEG**s under `public/screenshots/` and drop new rows in this compact
 | Search | <img src="./public/screenshots/search-messages.jpeg" alt="Search" width="220" /> | Keyword search while composing so context never leaves. |
 | Dashboard | <img src="./public/screenshots/home-dashboard.jpeg" alt="Dashboard" width="220" /> | Post-login overview with presence, favorites, and socket status. |
 
-> If an image fails to render, double-check the filename/extension inside `public/screenshots/`.
-
 ---
 
 ## 🔧 Available Scripts
