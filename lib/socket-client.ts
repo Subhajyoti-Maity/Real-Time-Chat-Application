@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export function getSocket() {
   if (!socket) {
-    socket = io('http://localhost:3006', {
+    socket = io({
       path: '/api/socket',
       transports: ['polling'],
       withCredentials: true

@@ -14,9 +14,10 @@
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
-  "bcryptjs": "^3.0.3",
+    "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
+    "express": "^5.2.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.1",
     "next": "^15.4.6",

@@ -61,7 +61,7 @@ export default function Login() {
       if (!response.ok) {
         // Handle specific error messages
         let errorMessage = 'Login failed';
-        if (data.error) {
+        if (data && data.error) {
           switch (data.error) {
             case 'Username or email not found':
               errorMessage = 'Username or email not found';
@@ -79,7 +79,6 @@ export default function Login() {
         setError(errorMessage);
         setIsLoading(false);
         return;
-      }
       }
 
       console.log('✅ Login successful, storing data...');

@@ -39,25 +39,68 @@ Modern chat UI built with **Next.js 15**, **React 19**, **TypeScript**, **Socket
 
 ---
 
+
 ## 🧰 Tech Stack
-| Layer | Technologies |
-| --- | --- |
-| UI framework | Next.js 15 App Router, React 19, TypeScript 5 |
-| Styling | Tailwind CSS v4, custom CSS modules, PostCSS |
-| Real-time transport | Socket.io 4 (client + Node server) |
-| Data & auth | MongoDB Atlas with Mongoose 8, JWT, bcryptjs |
-| Tooling | Node.js 20+, npm 10+, ESLint 9, Turbopack/Next build |
-| Dev scripts | `dev`, `dev:socket`, `dev:all`, setup wizard, cleanup utilities |
+| Layer           | Technologies                                                      |
+| -------------- | ----------------------------------------------------------------- |
+| UI framework   | Next.js 15 App Router, React 19, TypeScript 5                     |
+| Styling        | Tailwind CSS v4, custom CSS modules, PostCSS                      |
+| Real-time      | Socket.io 4 (client + Node server, separate backend on 3006)      |
+| Data & auth    | MongoDB Atlas with Mongoose 8, JWT, bcryptjs                      |
+| Tooling        | Node.js 20+, npm 10+, ESLint 9, Turbopack/Next build              |
+| Dev scripts    | `dev` (frontend), `dev:socket` (backend), `dev:all` (both)        |
+
+---
+
+## 🚀 Development Workflow
+
+**Recommended:**
+
+- Run the frontend (Next.js) and backend (Socket.IO) as separate processes for best reliability.
+- Use `npm run dev:all` to start both servers concurrently for local development.
+       - Frontend: http://localhost:3001
+       - Backend (Socket.IO): http://localhost:3006
+- For production, deploy frontend and backend as separate services or use a reverse proxy.
+
+---
 
 ---
 
 
 ## 🏗 Architecture Overview
 
-- **App Router UI**: `app/` renders pages + API routes (Next.js frontend & backend).
-- **Socket hub**: `server.js` handles WebSocket traffic (real-time messaging, presence, reactions).
-- **MongoDB via Mongoose**: Central models in `lib/` + `models/` shared by APIs, sockets, and scripts.
-- **Middleware**: JWT verification guards protected routes and APIs.
+
+ ```
+        
+```
+┌───────────────┐
+│   Browser     │
+│  (User/App)   │
+└──────┬────────┘
+       │  HTTP/API/WebSocket
+       ▼
+┌────────────────────┐
+│  Next.js Server    │
+│ (API & Socket.io)  │
+└──────┬─────────────┘
+       │  DB Queries
+       ▼
+┌───────────────┐
+│   MongoDB     │
+│  (Database)   │
+└───────────────┘
+       ▲
+       │
+       │  WebSocket (Real-time Messaging)
+       └───────────────┐
+                       │
+┌──────────────────────┴─────────────────────┐
+│              (Back to Browser)             │
+└────────────────────────────────────────────┘
+```
+        
+ ```
+
 
 ```
 ┌───────────────┐
@@ -155,6 +198,7 @@ Real-Time-Chat-Application/
 │   ├── config.ts
 │   ├── mongodb.js
 │   ├── mongodb.ts
+│   ├── socket-client.ts
 │   └── socket.ts
 ├── models/
 │   ├── Message.js
